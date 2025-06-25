@@ -7,13 +7,14 @@ import { Loader2 } from "lucide-react";
 
 export default function ProtectedRoute({ children, allowedRoles }) {
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
+    let isMounted = true;
+    
+    const checkAuth = async (user) => {
       try {
-        const user = auth.currentUser;
-        
         if (!user) {
           console.log("No user found, redirecting to login");
           router.push("/login");
@@ -26,6 +27,8 @@ export default function ProtectedRoute({ children, allowedRoles }) {
         console.log("User data:", userData);
         
         const { role, approved } = userData;
+
+        if (!isMounted) return;
 
         if (!allowedRoles.includes(role)) {
           console.log(`Role ${role} not allowed, redirecting to unauthorized`);
@@ -40,29 +43,46 @@ export default function ProtectedRoute({ children, allowedRoles }) {
         }
 
         console.log("Authorization successful");
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       } catch (error) {
         console.error("Auth check error:", error);
-        router.push("/login");
+        if (isMounted) {
+          router.push("/login");
+        }
       }
     };
 
     const unsubscribe = auth.onAuthStateChanged((user) => {
+      setAuthChecked(true);
       if (user) {
-        checkAuth();
+        checkAuth(user);
       } else {
         router.push("/login");
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [allowedRoles, router]);
 
-  if (loading) {
+  if (loading && !authChecked) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <Loader2 className="h-12 w-12 text-blue-600 animate-spin mb-4" />
         <p className="text-gray-600">Loading your dashboard...</p>
+      </div>
+    );
+  }
+
+  if (loading && authChecked) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <Loader2 className="h-12 w-12 text-blue-600 animate-spin mb-4" />
+        <p className="text-gray-600">Redirecting to the appropriate page...</p>
       </div>
     );
   }
