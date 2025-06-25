@@ -117,6 +117,7 @@ export default function StudentDashboard() {
         studentId,
         purpose,
         datetime: appointmentDatetime,
+        status: "pending", 
         createdAt: new Date(),
       });
 
@@ -144,6 +145,7 @@ export default function StudentDashboard() {
         (t) => t.id === selectedTeacher
       );
 
+      
       const newAppointment = {
         id: appointmentRef.id,
         teacherId: selectedTeacher,
@@ -171,7 +173,7 @@ export default function StudentDashboard() {
 
       setActiveTab("appointments");
 
-      toast.success("Appointment booked successfully!");
+      toast.success("Appointment request submitted! Awaiting teacher approval.");
     } catch (error) {
       console.error("Error booking appointment:", error);
       toast.error("Failed to book appointment. Please try again.");
